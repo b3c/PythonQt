@@ -36,6 +36,7 @@ project(PythonQt)
 find_package(PythonLibs REQUIRED)
 include_directories("${PYTHON_INCLUDE_DIR}")
 
+option(BUILD_SHARED_LIBS "Build shared library" ON)
 #-----------------------------------------------------------------------------
 # VTK
 
@@ -216,13 +217,22 @@ qt4_add_resources(gen_qrc_sources ${qrc_sources})
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
-  
+
+if(${BUILD_SHARED_LIBS})
 add_library(PythonQt SHARED
             ${sources}
             ${gen_moc_sources}
             ${gen_ui_sources}
             ${gen_qrc_sources}
   )
+else (${BUILD_SHARED_LIBS})
+add_library(PythonQt STATIC
+            ${sources}
+            ${gen_moc_sources}
+            ${gen_ui_sources}
+            ${gen_qrc_sources}
+  )
+endif(${BUILD_SHARED_LIBS})
 set_target_properties(PythonQt PROPERTIES DEFINE_SYMBOL PYTHONQT_EXPORTS)
 
 #
