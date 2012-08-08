@@ -127,6 +127,8 @@ void ShellHeaderGenerator::write(QTextStream &s, const AbstractMetaClass *meta_c
       s << "),_wrapper(NULL) {};" << endl;
     }
     s << endl;
+    s << "   ~" << shellClassName(meta_class) << "();" << endl;
+    s << endl;
 
     foreach(AbstractMetaFunction* fun, virtualsForShell) {
       s << "virtual ";
@@ -263,16 +265,11 @@ void ShellHeaderGenerator::write(QTextStream &s, const AbstractMetaClass *meta_c
     s << "void delete_" << meta_class->name() << "(" << meta_class->qualifiedCppName() << "* obj) { delete obj; } ";
     s << endl;
   }
-  if (meta_class->name()=="QTreeWidgetItem") {
-    s << "bool py_hasOwner(QTreeWidgetItem* theWrappedObject) { return theWrappedObject->treeWidget()!=NULL || theWrappedObject->parent()!=NULL; }" << endl;
-  } else if (meta_class->name()=="QGraphicsItem") {
-    s << "bool py_hasOwner(QGraphicsItem* theWrappedObject) { return theWrappedObject->scene()!=NULL || theWrappedObject->parentItem()!=NULL; }" << endl;
-  }
 
   AbstractMetaFunctionList functions = getFunctionsToWrap(meta_class);
 
   foreach (const AbstractMetaFunction *function, functions) {
-    if (!function->isSlot()) {
+    if (!function->isSlot() || function->isVirtual()) {
       s << "   ";
       writeFunctionSignature(s, function, 0, QString(),
         Option(ConvertReferenceToPtr | FirstArgIsWrappedObject| IncludeDefaultExpression | OriginalName | ShowStatic | UnderscoreSpaces));

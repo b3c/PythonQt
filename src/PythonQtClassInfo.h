@@ -44,31 +44,16 @@ class PythonQtSlotInfo;
 
 struct PythonQtMemberInfo {
   enum Type {
-    Invalid, Slot, EnumValue, EnumWrapper, Property, NotFound 
+    Invalid, Slot, Signal, EnumValue, EnumWrapper, Property, NotFound 
   };
 
   PythonQtMemberInfo():_type(Invalid),_slot(NULL),_enumWrapper(NULL),_enumValue(0) { }
   
-  PythonQtMemberInfo(PythonQtSlotInfo* info) {
-    _type = Slot;
-    _slot = info;
-    _enumValue = NULL;
-  }
+  PythonQtMemberInfo(PythonQtSlotInfo* info);
 
-  PythonQtMemberInfo(const PythonQtObjectPtr& enumValue) {
-    _type = EnumValue;
-    _slot = NULL;
-    _enumValue = enumValue;
-    _enumWrapper = NULL;
-  }
+  PythonQtMemberInfo(const PythonQtObjectPtr& enumValue);
 
-  PythonQtMemberInfo(const QMetaProperty& prop) {
-    _type = Property;
-    _slot = NULL;
-    _enumValue = NULL;
-    _property = prop;
-    _enumWrapper = NULL;
-  }
+  PythonQtMemberInfo(const QMetaProperty& prop);
 
   Type              _type;
 
@@ -159,23 +144,20 @@ public:
   //! get list of all properties (on QObjects only, otherwise the list is empty)
   QStringList propertyList();
 
-  //! get list of all members
-  QStringList memberList(bool metaOnly = false);
+  //! get list of all members (excluding properties, which can be listed with propertyList())
+  QStringList memberList();
 
   //! get the meta type id of this class (only valid for isCPPWrapper() == true)
   int metaTypeId() { return _metaTypeId; }
 
   //! set an additional decorator provider that offers additional decorator slots for this class 
-  void setDecoratorProvider(PythonQtQObjectCreatorFunctionCB* cb) { _decoratorProviderCB = cb; _decoratorProvider = NULL; }
+  void setDecoratorProvider(PythonQtQObjectCreatorFunctionCB* cb);
 
   //! get the decorator qobject instance
   QObject* decorator();
   
   //! add the parent class info of a CPP object
   void addParentClass(const ParentClassInfo& info) { _parentClasses.append(info); }
-
-  //! check if the special method "py_hasOwner" is implemented and if it returns false, which means that the object may be destroyed
-  bool hasOwnerMethodButNoOwner(void* object);
 
   //! set the associated PythonQtClassWrapper (which handles instance creation of this type)
   void setPythonQtClassWrapper(PyObject* obj) { _pythonQtClassWrapper = obj; }
@@ -201,7 +183,10 @@ public:
 
   //! returns if the localScope has an enum of that type name or if the enum contains a :: scope, if that class contails the enum
   static PyObject* findEnumWrapper(const QByteArray& name, PythonQtClassInfo* localScope, bool* isLocalEnum = NULL);
-  
+
+  //! clear all members that where cached as "NotFound"
+  void clearNotFoundCachedMembers();
+
 private:
   void createEnumWrappers();
   void createEnumWrappers(const QMetaObject* meta);
@@ -210,7 +195,7 @@ private:
   //! clear all cached members
   void clearCachedMembers();
 
-  void* recursiveCastDownIfPossible(void* ptr, char** resultClassName);
+  void* recursiveCastDownIfPossible(void* ptr, const char** resultClassName);
 
   PythonQtSlotInfo* findDecoratorSlotsFromDecoratorProvider(const char* memberName, PythonQtSlotInfo* inputInfo, bool &found, QHash<QByteArray, PythonQtMemberInfo>& memberCache, int upcastingOffset);
   void listDecoratorSlotsFromDecoratorProvider(QStringList& list, bool metaOnly);
@@ -225,7 +210,7 @@ private:
 
   PythonQtSlotInfo* findDecoratorSlots(const char* memberName, int memberNameLen, PythonQtSlotInfo* tail, bool &found, QHash<QByteArray, PythonQtMemberInfo>& memberCache, int upcastingOffset);
   int findCharOffset(const char* sigStart, char someChar);
-
+ 
   QHash<QByteArray, PythonQtMemberInfo> _cachedMembers;
 
   PythonQtSlotInfo*                    _constructors;

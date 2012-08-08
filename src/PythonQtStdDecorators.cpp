@@ -46,6 +46,7 @@
 
 bool PythonQtStdDecorators::connect(QObject* sender, const QByteArray& signal, PyObject* callable)
 {
+  bool result = false;
   QByteArray signalTmp;
   char first = signal.at(0);
   if (first>='0' && first<='9') {
@@ -53,15 +54,19 @@ bool PythonQtStdDecorators::connect(QObject* sender, const QByteArray& signal, P
   } else {
     signalTmp = "2" + signal;
   }
-    
+
   if (sender) {
-    return PythonQt::self()->addSignalHandler(sender, signalTmp, callable);
-  } else {
-    return false;
+    result = PythonQt::self()->addSignalHandler(sender, signalTmp, callable);
+    if (!result) {
+      if (sender->metaObject()->indexOfSignal(QMetaObject::normalizedSignature(signalTmp.constData()+1)) == -1) {
+        qWarning("PythonQt: QObject::connect() signal '%s' does not exist on %s", signal.constData(), sender->metaObject()->className());
+      }
+    }
   }
+  return result;
 }
 
-bool PythonQtStdDecorators::connect(QObject* sender, const QByteArray& signal, QObject* receiver, const QByteArray& slot)
+bool PythonQtStdDecorators::connect(QObject* sender, const QByteArray& signal, QObject* receiver, const QByteArray& slot, Qt::ConnectionType type)
 {
   bool r = false;
   if (sender && receiver) {
@@ -80,13 +85,14 @@ bool PythonQtStdDecorators::connect(QObject* sender, const QByteArray& signal, Q
     } else {
       slotTmp = "1" + slot;
     }
-    r = QObject::connect(sender, signalTmp, receiver, slotTmp);
+    r = QObject::connect(sender, signalTmp, receiver, slotTmp, type);
   }
   return r;
 }
 
 bool PythonQtStdDecorators::disconnect(QObject* sender, const QByteArray& signal, PyObject* callable)
 {
+  bool result = false;
   QByteArray signalTmp;
   char first = signal.at(0);
   if (first>='0' && first<='9') {
@@ -95,10 +101,17 @@ bool PythonQtStdDecorators::disconnect(QObject* sender, const QByteArray& signal
     signalTmp = "2" + signal;
   }
   if (sender) {
-    return PythonQt::self()->removeSignalHandler(sender, signalTmp, callable);
-  } else {
-    return false;
+    result = PythonQt::self()->removeSignalHandler(sender, signalTmp, callable);
+    if (callable == NULL) {
+      result |= QObject::disconnect(sender, signalTmp, NULL, NULL);
+    }
+    if (!result) {
+      if (sender->metaObject()->indexOfSignal(QMetaObject::normalizedSignature(signalTmp.constData()+1)) == -1) {
+        qWarning("PythonQt: QObject::disconnect() signal '%s' does not exist on %s", signal.constData(), sender->metaObject()->className());
+      }
+    }
   }
+  return result;
 }
 
 bool PythonQtStdDecorators::disconnect(QObject* sender, const QByteArray& signal, QObject* receiver, const QByteArray& slot)
@@ -112,7 +125,7 @@ bool PythonQtStdDecorators::disconnect(QObject* sender, const QByteArray& signal
     } else {
       signalTmp = "2" + signal;
     }
-    
+
     QByteArray slotTmp;
     first = slot.at(0);
     if (first>='0' && first<='9') {
@@ -120,20 +133,11 @@ bool PythonQtStdDecorators::disconnect(QObject* sender, const QByteArray& signal
     } else {
       slotTmp = "1" + slot;
     }
-    
+
     r = QObject::disconnect(sender, signalTmp, receiver, slotTmp);
   }
   return r;
 }
-
-#undef emit
-void PythonQtStdDecorators::emit(QObject* sender, const QByteArray& signal, PyObject* arg1 ,PyObject* arg2 ,
-          PyObject* arg3 ,PyObject* arg4 ,PyObject* arg5 ,PyObject* arg6 ,PyObject* arg7 )
-{
-  // TODO xxx
-  // use normal PythonQtSlot calling code, add "allowSignal" to member lookup?!
-}
-#define emit
 
 QObject* PythonQtStdDecorators::parent(QObject* o) {
   return o->parent();
@@ -244,7 +248,7 @@ QObject* PythonQtStdDecorators::findChild(QObject* parent, const char* typeName,
     if (!name.isNull() && obj->objectName() != name)
       continue;
 
-    if ((typeName && obj->inherits(typeName)) ||        
+    if ((typeName && obj->inherits(typeName)) ||
       (meta && meta->cast(obj)))
       return obj;
   }
@@ -274,7 +278,7 @@ int PythonQtStdDecorators::findChildren(QObject* parent, const char* typeName, c
     if (!name.isNull() && obj->objectName() != name)
       continue;
 
-    if ((typeName && obj->inherits(typeName)) ||        
+    if ((typeName && obj->inherits(typeName)) ||
       (meta && meta->cast(obj))) {
         list += obj;
     }
@@ -301,7 +305,7 @@ int PythonQtStdDecorators::findChildren(QObject* parent, const char* typeName, c
     if (regExp.indexIn(obj->objectName()) == -1)
       continue;
 
-    if ((typeName && obj->inherits(typeName)) ||        
+    if ((typeName && obj->inherits(typeName)) ||
       (meta && meta->cast(obj))) {
         list += obj;
     }
@@ -311,4 +315,9 @@ int PythonQtStdDecorators::findChildren(QObject* parent, const char* typeName, c
   }
 
   return 0;
+}
+
+const QMetaObject* PythonQtStdDecorators::metaObject( QObject* obj )
+{
+  return obj->metaObject();
 }

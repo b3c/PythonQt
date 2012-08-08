@@ -45,14 +45,9 @@
 #include <QTime>
 #include <QDate>
 
-#ifdef PYTHONQT_USE_VTK
-# include <vtkPythonUtil.h>
-# include <vtkObject.h>
-#endif
-
 PythonQtValueStorage<qint64, 128>  PythonQtConv::global_valueStorage;
 PythonQtValueStorage<void*, 128>   PythonQtConv::global_ptrStorage;
-PythonQtValueStorage<QVariant, 32> PythonQtConv::global_variantStorage;
+PythonQtValueStorageWithCleanup<QVariant, 128> PythonQtConv::global_variantStorage;
 
 QHash<int, PythonQtConvertMetaTypeToPythonCB*> PythonQtConv::_metaTypeToPythonConverters;
 QHash<int, PythonQtConvertPythonToMetaTypeCB*> PythonQtConv::_pythonToMetaTypeConverters;
@@ -382,40 +377,52 @@ void* PythonQtConv::ConvertPythonToQt(const PythonQtMethodInfo::ParameterInfo& i
      // a pointer
      if (info.typeId == QMetaType::Char || info.typeId == QMetaType::UChar)
      {
+       if (obj->ob_type == &PyString_Type) {
+         // take direct reference to string data
+         const char* data = PyString_AS_STRING(obj);
+         PythonQtValueStorage_ADD_VALUE_IF_NEEDED(alreadyAllocatedCPPObject,global_ptrStorage, void*, (void*)data, ptr);
+       } else {
+         // convert to string
+         QString str = PyObjGetString(obj, strict, ok);
+         if (ok) {
+           QByteArray bytes;
+           bytes = str.toUtf8();
+           if (ok) {
+             void* ptr2 = NULL;
+             PythonQtValueStorage_ADD_VALUE_IF_NEEDED(NULL,global_variantStorage, QVariant, QVariant(bytes), ptr2);
+             PythonQtValueStorage_ADD_VALUE_IF_NEEDED(alreadyAllocatedCPPObject,global_ptrStorage, void*, (((QByteArray*)((QVariant*)ptr2)->constData())->data()), ptr);
+           }
+         }
+       }
+     } else if (info.typeId == QMetaType::QString) {
+       // TODO: this is a special case for bad Qt APIs which take a QString*, like QtGui.QFileDialog.getSaveFileName
+       // In general we would need to decide to either support * args for all basic types (ignoring the fact that the
+       // result value is not useable in Python), or if all these APIs need to be wrapped manually/differently, like PyQt/PySide do.
        QString str = PyObjGetString(obj, strict, ok);
        if (ok) {
          void* ptr2 = NULL;
-         PythonQtValueStorage_ADD_VALUE_IF_NEEDED(alreadyAllocatedCPPObject,global_variantStorage, QVariant, QVariant(str.toUtf8()), ptr2);
-         PythonQtValueStorage_ADD_VALUE_IF_NEEDED(alreadyAllocatedCPPObject,global_ptrStorage, void*, (((QByteArray*)((QVariant*)ptr2)->constData())->data()), ptr);
+         PythonQtValueStorage_ADD_VALUE_IF_NEEDED(NULL,global_variantStorage, QVariant, QVariant(str), ptr2);
+         PythonQtValueStorage_ADD_VALUE_IF_NEEDED(alreadyAllocatedCPPObject,global_ptrStorage, void*, (void*)((QVariant*)ptr2)->constData(), ptr);
        }
      } else if (info.name == "PyObject") {
        // handle low level PyObject directly
        PythonQtValueStorage_ADD_VALUE_IF_NEEDED(alreadyAllocatedCPPObject,global_ptrStorage, void*, obj, ptr);
-     }
-#ifdef PYTHONQT_USE_VTK
-     else if (info.name.startsWith("vtk")) {
-#if (VTK_MAJOR_VERSION == 5 && VTK_MINOR_VERSION <= 6) || VTK_MAJOR_VERSION < 5
-       vtkObjectBase * vtkObj = vtkPythonGetPointerFromObject(obj, info.name.data());
-#else
-       vtkObjectBase * vtkObj = vtkPythonUtil::GetPointerFromObject(obj, info.name.data());
-#endif
-       if (vtkObj) {
-         PythonQtValueStorage_ADD_VALUE_IF_NEEDED(alreadyAllocatedCPPObject,global_ptrStorage, void*, vtkObj, ptr);
-       }
-     }
-#endif
-     else if (obj == Py_None) {
+     } else if (obj == Py_None) {
        // None is treated as a NULL ptr
        PythonQtValueStorage_ADD_VALUE_IF_NEEDED(alreadyAllocatedCPPObject,global_ptrStorage, void*, NULL, ptr);
-     }
-     else {
-       // if we are not strict, we try if we are passed a 0 integer
-       if (!strict) {
-         bool ok;
-         int value = PyObjGetInt(obj, true, ok);
-         if (ok && value==0) {
-           // TODOXXX is this wise? or should it be expected from the programmer to use None?
-           PythonQtValueStorage_ADD_VALUE_IF_NEEDED(alreadyAllocatedCPPObject,global_ptrStorage, void*, NULL, ptr);
+     } else {
+       void* foreignWrapper = PythonQt::priv()->unwrapForeignWrapper(info.name, obj);
+       if (foreignWrapper) {
+         PythonQtValueStorage_ADD_VALUE_IF_NEEDED(alreadyAllocatedCPPObject,global_ptrStorage, void*, foreignWrapper, ptr);
+       } else {
+         // if we are not strict, we try if we are passed a 0 integer
+         if (!strict) {
+           bool ok;
+           int value = PyObjGetInt(obj, true, ok);
+           if (ok && value==0) {
+             // TODOXXX is this wise? or should it be expected from the programmer to use None?
+             PythonQtValueStorage_ADD_VALUE_IF_NEEDED(alreadyAllocatedCPPObject,global_ptrStorage, void*, NULL, ptr);
+           }
          }
        }
      }
@@ -692,15 +699,11 @@ QString PythonQtConv::PyObjGetString(PyObject* val, bool strict, bool& ok) {
   if (val->ob_type == &PyString_Type) {
     r = QString(PyString_AS_STRING(val));
   } else if (PyUnicode_Check(val)) {
-//#ifdef WIN32
-//    r = QString::fromUtf16(PyUnicode_AS_UNICODE(val));
-//#else
     PyObject *ptmp = PyUnicode_AsUTF8String(val);
     if(ptmp) {
       r = QString::fromUtf8(PyString_AS_STRING(ptmp));
       Py_DECREF(ptmp);
     }
-//#endif
   } else if (!strict) {
     // EXTRA: could also use _Unicode, but why should we?
     PyObject* str =  PyObject_Str(val);
@@ -764,7 +767,13 @@ int PythonQtConv::PyObjGetInt(PyObject* val, bool strict, bool &ok) {
     } else if (val == Py_True) {
       d = 1;
     } else {
-      ok = false;
+      PyErr_Clear();
+      // PyInt_AsLong will try conversion to an int if the object is not an int:
+      d = PyInt_AsLong(val);
+      if (PyErr_Occurred()) {
+        ok = false;
+        PyErr_Clear();
+      }
     }
   } else {
     ok = false;
@@ -790,7 +799,13 @@ qint64 PythonQtConv::PyObjGetLongLong(PyObject* val, bool strict, bool &ok) {
     } else if (val == Py_True) {
       d = 1;
     } else {
-      ok = false;
+      PyErr_Clear();
+      // PyLong_AsLongLong will try conversion to an int if the object is not an int:
+      d = PyLong_AsLongLong(val);
+      if (PyErr_Occurred()) {
+        ok = false;
+        PyErr_Clear();
+      }
     }
   } else {
     ok = false;
@@ -816,7 +831,13 @@ quint64 PythonQtConv::PyObjGetULongLong(PyObject* val, bool strict, bool &ok) {
     } else if (val == Py_True) {
       d = 1;
     } else {
-      ok = false;
+      PyErr_Clear();
+      // PyLong_AsLongLong will try conversion to an int if the object is not an int:
+      d = PyLong_AsLongLong(val);
+      if (PyErr_Occurred()) {
+        PyErr_Clear();
+        ok = false;
+      }
     }
   } else {
     ok = false;
@@ -839,7 +860,13 @@ double PythonQtConv::PyObjGetDouble(PyObject* val, bool strict, bool &ok) {
     } else if (val == Py_True) {
       d = 1;
     } else {
-      ok = false;
+      PyErr_Clear();
+      // PyFloat_AsDouble will try conversion to a double if the object is not a float:
+      d = PyFloat_AsDouble(val);
+      if (PyErr_Occurred()) {
+        PyErr_Clear();
+        ok = false;
+      }
     }
   } else {
     ok = false;
@@ -996,8 +1023,7 @@ QVariant PythonQtConv::PyObjToQVariant(PyObject* val, int type)
     {
       if (PyMapping_Check(val)) {
         QMap<QString,QVariant> map;
-        // PyObject* items = PyMapping_Items(val);
-        PyObject* items = PyObject_CallMethod(val, const_cast<char*>("items"), NULL);
+        PyObject* items = PyMapping_Items(val);
         if (items) {
           int count = PyList_Size(items);
           PyObject* value;
@@ -1058,12 +1084,7 @@ PyObject* PythonQtConv::QStringToPyObject(const QString& str)
   if (str.isNull()) {
     return PyString_FromString("");
   } else {
-//#ifdef WIN32
-    //    return PyString_FromString(str.toLatin1().data());
-//    return PyUnicode_FromUnicode(str.utf16(), str.length());
-//#else
     return PyUnicode_DecodeUTF16((const char*)str.utf16(), str.length()*2, NULL, NULL);
-//#endif
   }
 }
 

@@ -39,4 +39,4 @@ macx {
   
   unix:LIBS += $$system(python$${PYTHON_VERSION}-config --libs)
   unix:QMAKE_CXXFLAGS += $$system(python$${PYTHON_VERSION}-config --includes)
-}
+}

@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
-<typesystem package="com.trolltech.qt.gui"><rejection class="QAbstractTextDocumentLayout"/><rejection class="QColormap"/><rejection class="QFontDatabase"/><rejection class="QIconEngineV2"/><rejection class="QInputMethodEvent"/><rejection class="QPainterPath::Element"/><rejection class="QTextBlock::iterator"/><rejection class="QTextEdit::ExtraSelection"/><rejection class="QTextFrame::iterator"/><rejection class="QTextLayout::FormatRange"/><rejection class="QTreeWidgetItemIterator"/><rejection class="QAccessibleFactoryInterface"/><rejection class="QIconEngineFactoryInterfaceV2"/><rejection class="QImageIOHandlerFactoryInterface"/><rejection class="QInputContextFactoryInterface"/><rejection class="QStyleFactoryInterface"/><rejection class="QPictureFormatInterface"/><rejection class="QAbstractProxyModel"/><rejection class="QSortFilterProxyModel"/><rejection class="QDirModel"/><rejection class="QFileSystemModel"/><rejection class="QPrinterInfo"/><rejection class="QProxyModel"/><rejection class="QPrinterInfo"/><rejection class="QTextOption"/><suppress-warning text="WARNING(MetaJavaBuilder) :: Rejected enum has no alternative...: QPalette::NColorRoles"/><suppress-warning text="WARNING(MetaJavaBuilder) :: Cannot find enum constant for value 'DragMove' in 'QDragMoveEvent' or any of its super classes"/>
+<typesystem package="com.trolltech.qt.gui"><rejection class="QAbstractTextDocumentLayout"/><rejection class="QColormap"/><rejection class="QIconEngineV2"/><rejection class="QInputMethodEvent"/><rejection class="QPainterPath::Element"/><rejection class="QTextBlock::iterator"/><rejection class="QTextEdit::ExtraSelection"/><rejection class="QTextFrame::iterator"/><rejection class="QTextLayout::FormatRange"/><rejection class="QTreeWidgetItemIterator"/><rejection class="QAccessibleFactoryInterface"/><rejection class="QIconEngineFactoryInterfaceV2"/><rejection class="QImageIOHandlerFactoryInterface"/><rejection class="QInputContextFactoryInterface"/><rejection class="QStyleFactoryInterface"/><rejection class="QPictureFormatInterface"/><suppress-warning text="WARNING(MetaJavaBuilder) :: Rejected enum has no alternative...: QPalette::NColorRoles"/><suppress-warning text="WARNING(MetaJavaBuilder) :: Cannot find enum constant for value 'DragMove' in 'QDragMoveEvent' or any of its super classes"/>
 
   <rejection class="*" function-name="d_func"/>
 
   <rejection class="*" field-name="d_ptr"/>
   <rejection class="*" field-name="d"/>
+
 
   <rejection class="QGenericMatrix"/>  
   <rejection class="QPixmapFilterPrivate"/>
@@ -17,7 +18,6 @@
   <rejection class="QBrushData"/>
   <rejection class="QImageTextKeyLang"/>
   <rejection class="QItemEditorCreator"/>
-  <rejection class="QLibrary"/>
   <rejection class="QLinkedList"/>
   <rejection class="QLinkedListData"/>
   <rejection class="QLinkedListIterator"/>
@@ -95,7 +95,9 @@
   <rejection class="QGradient" function-name="interpolationMode"/>
   <rejection class="QAbstractTextDocumentLayout" function-name="handlerForObject"/>
   
-
+  <enum-type name="QStaticText::PerformanceHint"/>
+  <enum-type name="QTextBlockFormat::LineHeightTypes"/>
+  <enum-type name="QStyleOptionTabWidgetFrameV2::StyleOptionVersion"/>
   <enum-type name="QStyleOptionTabBarBaseV2::StyleOptionVersion"/>
   <enum-type name="QTabBar::SelectionBehavior"/>
   <enum-type name="QTabBar::ButtonPosition"/>
@@ -508,11 +510,29 @@
   <enum-type name="QGraphicsEffect::ChangeFlag" flags="QGraphicsEffect::ChangeFlags"/>
   <enum-type name="QGraphicsItem::PanelModality"/>
   <enum-type name="QPinchGesture::WhatChange" flags="QPinchGesture::WhatChanged"/>
+  <enum-type name="QPinchGesture::ChangeFlag" flags="QPinchGesture::ChangeFlags"/>
+  <enum-type name="QGraphicsBlurEffect::BlurHint" flags="QGraphicsBlurEffect::BlurHints"/>
+  <enum-type name="QGraphicsEffect::PixmapPadMode"/>
+  <enum-type name="QGestureRecognizer::ResultFlag" flags="QGestureRecognizer::Result"/>
+  <enum-type name="QGestureRecognizer::LineHeightTypes"/>
   <enum-type name="QStyle::RequestSoftwareInputPanel"/>
   <enum-type name="QSwipeGesture::SwipeDirection"/>
   <enum-type name="QTouchEvent::DeviceType"/>
-  
+  <enum-type name="QFont::HintingPreference"/>
+  <enum-type name="QGesture::GestureCancelPolicy"/>
+  <enum-type name="QTextDocument::Stacks"/>
+  <enum-type name="QPainter::PixmapFragmentHint"/>
 
+  <object-type name="QAbstractProxyModel"/>
+  <object-type name="QDirModel"/>
+  <object-type name="QFileSystemModel"/>
+  <object-type name="QPrinterInfo"/>
+  <object-type name="QSortFilterProxyModel"/>
+  <object-type name="QProxyModel"/>
+  <object-type name="QTextOption"/>
+  <object-type name="QFontDatabase"/>
+  <object-type name="QGestureRecognizer" force-abstract="yes"/>
+  
   <value-type name="QPixmapCache::Key"/>
   <value-type name="QTileRules"/>
   <value-type name="QVector2D"/>
@@ -587,6 +607,7 @@
     <modify-function signature="operator=(QStyleOptionTabBarBase)" remove="all"/>
   </value-type>
   <value-type name="QStyleOptionTabWidgetFrame" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type == QStyleOptionTabWidgetFrame::Type &amp;&amp; %1-&gt;version == QStyleOptionTabWidgetFrame::Version"/>
+  <value-type name="QStyleOptionTabWidgetFrameV2" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type == QStyleOptionTabWidgetFrameV2::Type &amp;&amp; %1-&gt;version == QStyleOptionTabWidgetFrameV2::Version"/>
   <value-type name="QStyleOptionTitleBar" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type == QStyleOptionTitleBar::Type &amp;&amp; %1-&gt;version == QStyleOptionTitleBar::Version"/>
   <value-type name="QStyleOptionToolBar" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type == QStyleOptionToolBar::Type &amp;&amp; %1-&gt;version == QStyleOptionToolBar::Version"/>
   <value-type name="QStyleOptionToolBox" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type == QStyleOptionToolBox::Type &amp;&amp; %1-&gt;version == QStyleOptionToolBox::Version"/>
@@ -1232,7 +1253,14 @@
         </conversion-rule>            
       </modify-argument>
     </modify-function>
-
+<inject-code class="pywrap-h">
+QImage* new_QImage( const uchar * data, int width, int height, QImage::Format format )
+{
+  QImage* image = new QImage(width, height, format);
+  memcpy(image-&gt;bits(), data, image-&gt;byteCount());
+  return image;
+}
+</inject-code>  
   </value-type>
 
   <value-type name="QColormap" delete-in-main-thread="yes">
@@ -1455,7 +1483,7 @@
   <interface-type name="QLayoutItem"/>
   <interface-type name="QPaintDevice"/>
 
-  <interface-type name="QGraphicsItem" delete-in-main-thread="yes">
+  <interface-type name="QGraphicsItem" delete-in-main-thread="yes" polymorphic-base="yes">
     <modify-function signature="setCursorForItemOnly(QCursor)" remove="all"/>
 
     <modify-function signature="setMatrix(QMatrix, bool)" remove="all"/>
@@ -1837,7 +1865,7 @@
     </modify-function>
   </object-type>
 
-  <object-type name="QGraphicsEllipseItem" delete-in-main-thread="yes"/>
+  <object-type name="QGraphicsEllipseItem" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type() == QGraphicsEllipseItem::Type" />
   <object-type name="QGraphicsItemAnimation">
     <modify-function signature="setItem(QGraphicsItem*)">
         <modify-argument index="1">
@@ -1854,29 +1882,30 @@
         <include file-name="QPair" location="global"/>
     </extra-includes>
   </object-type>
-  <object-type name="QGraphicsItemGroup" delete-in-main-thread="yes">
+  <object-type name="QGraphicsItemGroup" delete-in-main-thread="yes"
+  polymorphic-id-expression="%1-&gt;type() == QGraphicsItemGroup::Type">
       <modify-function signature="matrix()const" remove="all"/> <!--### Obsolete in 4.3-->
       <modify-function signature="resetMatrix()" remove="all"/> <!--### Obsolete in 4.3-->
       <modify-function signature="sceneMatrix()const" remove="all"/> <!--### Obsolete in 4.3-->
       <modify-function signature="setMatrix(QMatrix, bool)" remove="all"/> <!--### Obsolete in 4.3-->
   </object-type>
-  <object-type name="QGraphicsLineItem" delete-in-main-thread="yes">
+  <object-type name="QGraphicsLineItem" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type() == QGraphicsLineItem::Type">
       <modify-function signature="matrix()const" remove="all"/> <!--### Obsolete in 4.3-->
       <modify-function signature="resetMatrix()" remove="all"/> <!--### Obsolete in 4.3-->
       <modify-function signature="sceneMatrix()const" remove="all"/> <!--### Obsolete in 4.3-->
       <modify-function signature="setMatrix(QMatrix, bool)" remove="all"/> <!--### Obsolete in 4.3-->
   </object-type>
-  <object-type name="QGraphicsPathItem" delete-in-main-thread="yes"/>
+  <object-type name="QGraphicsPathItem" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type() == QGraphicsPathItem::Type"/>
 
-  <object-type name="QGraphicsPixmapItem" delete-in-main-thread="yes">
+  <object-type name="QGraphicsPixmapItem" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type() == QGraphicsPixmapItem::Type">
       <modify-function signature="matrix()const" remove="all"/> <!--### Obsolete in 4.3-->
       <modify-function signature="resetMatrix()" remove="all"/> <!--### Obsolete in 4.3-->
       <modify-function signature="sceneMatrix()const" remove="all"/> <!--### Obsolete in 4.3-->
       <modify-function signature="setMatrix(QMatrix, bool)" remove="all"/> <!--### Obsolete in 4.3-->
   </object-type>
-  <object-type name="QGraphicsPolygonItem" delete-in-main-thread="yes"/>
-  <object-type name="QGraphicsRectItem" delete-in-main-thread="yes"/>
-  <object-type name="QGraphicsSimpleTextItem" delete-in-main-thread="yes"/>
+  <object-type name="QGraphicsPolygonItem" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type() == QGraphicsPolygonItem::Type"/>
+  <object-type name="QGraphicsRectItem" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type() == QGraphicsRectItem::Type"/>
+  <object-type name="QGraphicsSimpleTextItem" delete-in-main-thread="yes" polymorphic-id-expression="%1-&gt;type() == QGraphicsSimpleTextItem::Type"/>
   <object-type name="QHBoxLayout"/>
   <object-type name="QHeaderView">
     <modify-function signature="initStyleOption(QStyleOptionHeader*)const">
@@ -2659,6 +2688,7 @@
   <object-type name="QInputEvent">
     <modify-function signature="modifiers()const" access="non-final"/>
   </object-type>
+  <object-type name="QGestureEvent" polymorphic-id-expression="%1-&gt;type() == QEvent::Gesture || %1-&gt;type() == QEvent::GestureOverride"/>
   <object-type name="QKeyEvent" polymorphic-id-expression="%1-&gt;type() == QEvent::KeyPress || %1-&gt;type() == QEvent::KeyRelease"/>
   <object-type name="QMouseEvent" polymorphic-id-expression="%1-&gt;type() == QEvent::MouseButtonDblClick || %1-&gt;type() == QEvent::MouseButtonPress || %1-&gt;type() == QEvent::MouseButtonRelease || %1-&gt;type() == QEvent::MouseMove"/>
   <object-type name="QPaintEvent" polymorphic-id-expression="%1-&gt;type() == QEvent::Paint"/>
@@ -3518,7 +3548,7 @@
     <modify-function signature="operator&lt;(QListWidgetItem)const" remove="all"/>
   </object-type>
 
-  <object-type name="QGraphicsTextItem"> <!-- a QObject so main-thread delete redundant -->
+  <object-type name="QGraphicsTextItem" polymorphic-id-expression="%1-&gt;type() == QGraphicsTextItem::Type"> <!-- a QObject so main-thread delete redundant -->
     <extra-includes>
       <include file-name="QTextCursor" location="global"/>
     </extra-includes>
@@ -5145,9 +5175,7 @@
     <modify-function signature="setMatrix(QMatrix, bool)" remove="all"/> <!--### Obsolete in 4.3-->
     <modify-function signature="setMatrixEnabled(bool)" remove="all"/> <!--### Obsolete in 4.3-->
   
-    <modify-function signature="fontInfo()const" remove="all"/>
-    <modify-function signature="fontMetrics()const" remove="all"/>
-    <modify-function signature="QPainter(QPaintDevice*)" remove="all"/>
+    <modify-function signature="setBrush(Qt::BrushStyle)" remove="all"/> <!--### Problematic in PythonQt -->
 
     <modify-function signature="begin(QPaintDevice*)">
       <modify-argument index="1">
@@ -5427,7 +5455,9 @@
     </modify-function>
   </object-type>
   <object-type name="QGraphicsProxyWidget"/> <!-- a QObject so main-thread delete redundant -->
-  <object-type name="QGraphicsWidget">  <!-- a QObject so main-thread delete redundant -->
+  <object-type name="QGraphicsWidget"
+    polymorphic-id-expression="%1-&gt;isWidget()">
+    <!-- a QObject so main-thread delete redundant -->
     <!-- Duplicate function to QObject::children() to override accidental shadowing which is not present in Jambi -->
     <modify-function signature="children()const" remove="all"/>
     <modify-function signature="setLayout(QGraphicsLayout*)">
@@ -5559,13 +5589,19 @@
   <object-type name="QStylePlugin"/>
   <object-type name="QTextCodecPlugin"/>
   <object-type name="QGesture"/>
+  <object-type name="QTapGesture"/>
+  <object-type name="QTapAndHoldGesture"/>
   <object-type name="QGraphicsAnchorLayout"/>
   <object-type name="QGraphicsAnchor"/>
   <object-type name="QGraphicsEffect"/>
+  <object-type name="QStaticText"/>
   <object-type name="QGraphicsObject">
     <!-- Duplicate function to QObject::children() to override accidental shadowing which is not present in Jambi -->
     <modify-function signature="children()const" remove="all"/>
   </object-type>
+  <object-type name="QGraphicsBlurEffect"/>
+  <object-type name="QGraphicsColorizeEffect"/>
+  <object-type name="QGraphicsDropShadowEffect"/>
   <object-type name="QGraphicsOpacityEffect"/>
   <object-type name="QGraphicsPixelizeEffect"/>
   <object-type name="QGraphicsRotation"/>
