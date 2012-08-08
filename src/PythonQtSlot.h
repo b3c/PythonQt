@@ -42,7 +42,8 @@
 */
 //----------------------------------------------------------------------------------
 
-#include "dPython.h"
+#include "PythonQtPythonInclude.h"
+
 #include "PythonQtSystem.h"
 #include "structmember.h"
 
@@ -64,9 +65,13 @@ PyObject* PythonQtSlotFunction_Call(PyObject *, PyObject *, PyObject *);
 
 PyObject *PythonQtSlotFunction_CallImpl(PythonQtClassInfo* classInfo, QObject* objectToCall, PythonQtSlotInfo* info, PyObject *args, PyObject *kw, void* firstArg=NULL,  void** directReturnValuePointer=NULL);
 
-
 PyObject* PythonQtSlotFunction_New(PythonQtSlotInfo *, PyObject *,
            PyObject *);
+
+PyObject *PythonQtMemberFunction_Call(PythonQtSlotInfo* info, PyObject* m_self, PyObject *args, PyObject *kw);
+PyObject *PythonQtMemberFunction_parameterTypes(PythonQtSlotInfo* theInfo);
+PyObject *PythonQtMemberFunction_parameterNames(PythonQtSlotInfo* theInfo);
+PyObject *PythonQtMemberFunction_typeName(PythonQtSlotInfo* theInfo);
 
 //! defines a python object that stores a Qt slot info
 typedef struct {
